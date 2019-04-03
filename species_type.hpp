@@ -1,0 +1,8 @@
+#ifndef ECOSIM_SPECIES_TYPE_HPP
+#define ECOSIM_SPECIES_TYPE_HPP
+
+enum SpeciesType {
+    PLANT, HERBIVORE, OMNIVORE
+};
+
+#endif //ECOSIM_SPECIES_TYPE_HPP
