@@ -7,18 +7,26 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
 #include "ncurses.h"
 
 #include "species_type.hpp"
+#include "ecosystem_element.hpp"
 
 using namespace std;
+using WaterObstacleList = vector<pair<Point, char>>;
+using FloraFaunaList = multimap<Point, EcosystemElement>;
 
-void drawMap(unique_ptr<vector<vector<char>>> &map);
+void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_ptr<FloraFaunaList> &floraFauna);
+
+// TODO: Make coordinates relative to the map starting point so curses can draw it wherever, such as the
+//  center of the screen
 
 int main(int argc, char **argv) {
     string script_filepath(argv[0]);
     string mapFilePath, speciesFilePath, fileLine;
-    auto map = make_unique<vector<vector<char>>>();
+    auto floraFauna = make_unique<FloraFaunaList>();
+    auto terrain = make_unique<WaterObstacleList>();
     // Get arguments and set default map and species files if none are specified
     if (argc >= 3) {
         mapFilePath = argv[1];
@@ -32,11 +40,24 @@ int main(int argc, char **argv) {
     }
 
     // Load map into memory
+    int xPos = 0;
+    int yPos = 0;
     ifstream mapFile(mapFilePath);
     if (mapFile.is_open()) {
         while (getline(mapFile, fileLine)) {
-            std::vector<char> line_data(fileLine.begin(), fileLine.end());
-            map->push_back(line_data);
+            xPos = 0;
+            for (char mapChar : fileLine) {
+                if (mapChar == '~' || mapChar == '#') {
+                    // Terrain element
+                    Point location(xPos, yPos);
+                    terrain->push_back(pair(location, mapChar));
+                } else {
+                    // Flora or fauna element
+
+                }
+                xPos++;
+            }
+            yPos++;
         }
         mapFile.close();
     } else {
@@ -56,9 +77,11 @@ int main(int argc, char **argv) {
         init_pair(1, COLOR_GREEN, COLOR_BLACK);
         init_pair(2, COLOR_BLUE, COLOR_BLACK);
         init_pair(3, COLOR_RED, COLOR_BLACK);
+        init_pair(4, COLOR_YELLOW, COLOR_BLACK);
+        init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
     }
 
-    drawMap(map);
+    drawMap(terrain, floraFauna);
 
     // Wait for user input
     getch();
@@ -68,32 +91,34 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void drawMap(unique_ptr<vector<vector<char>>> &map) {
-    for (auto &mapLineVector: *map) {
-        for (char &lineChar: mapLineVector) {
-            switch (lineChar) {
-                case '~' :
-                    // Water
-                    attron(COLOR_PAIR(2));
-                    addch(lineChar);
-                    attroff(COLOR_PAIR(2));
-                    break;
-                case '#':
-                    // Obstacle
-                    attron(COLOR_PAIR(3));
-                    addch(lineChar);
-                    attroff(COLOR_PAIR(3));
-                    break;
-                default:
-                    // Default to green on black text
-                    attron(COLOR_PAIR(1));
-                    addch(lineChar);
-                    attroff(COLOR_PAIR(1));
-                    break;
-            }
-
+void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_ptr<FloraFaunaList> &floraFauna) {
+    // Draw terrain
+    for (auto &pointCharPair: *waterObstacle) {
+        switch (pointCharPair.second) {
+            case '~' :
+                // Water
+                attron(COLOR_PAIR(2));
+                // Cursor location entered in the form  row, column (y, x)
+                mvaddch(pointCharPair.first.second, pointCharPair.first.first, '~');
+                attroff(COLOR_PAIR(2));
+                break;
+            case '#':
+                // Obstacle
+                attron(COLOR_PAIR(3));
+                mvaddch(pointCharPair.first.second, pointCharPair.first.first, '#');
+                attroff(COLOR_PAIR(3));
+                break;
+            default:
+                break;
         }
-        addch('\n');
+    }
+
+    // Draw plants and animals
+    for (auto &element: *floraFauna) {
+        attron(COLOR_PAIR(element.second.getColorPair()));
+        // Cursor location entered in the form  row, column (y, x)
+        mvaddch(element.first.second, element.first.first, element.second.getCharID());
+        attroff(COLOR_PAIR(element.second.getColorPair()));
     }
 
     refresh();
