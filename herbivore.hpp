@@ -5,13 +5,12 @@
 #include "ncurses.h"
 #include <vector>
 
-class Herbivore : EcosystemElement {
+class Herbivore : public EcosystemElement {
 public:
-    explicit Herbivore(const char &characterID, const std::vector<char> &&foodChainList, const int energyPoints)
+    explicit Herbivore(const char &characterID, const std::vector<char> &foodChainList, const int energyPoints)
             : charID(characterID),
-              energy(energyPoints) {
-        std::move(foodChainList.begin(), foodChainList.end(), foodChain.begin());
-    }
+              energy(energyPoints),
+              foodChain(foodChainList.begin(), foodChainList.end()) {}
 
     NCURSES_COLOR_T getColorPair() override { return Herbivore::colorPair; }
 

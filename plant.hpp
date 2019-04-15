@@ -4,7 +4,7 @@
 #include "ecosystem_element.hpp"
 #include "ncurses.h"
 
-class Plant : EcosystemElement {
+class Plant : public EcosystemElement {
 public:
     explicit Plant(const char &characterID, const int regrowthCoefficient, const int energyPoints)
             : charID(characterID),

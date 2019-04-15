@@ -5,13 +5,12 @@
 #include "ncurses.h"
 #include <vector>
 
-class Omnivore : EcosystemElement {
+class Omnivore : public EcosystemElement {
 public:
-    explicit Omnivore(const char &characterID, const std::vector<char> &&foodChainList, const int energyPoints)
+    explicit Omnivore(const char &characterID, const std::vector<char> &foodChainList, const int energyPoints)
             : charID(characterID),
-              energy(energyPoints) {
-        std::move(foodChainList.begin(), foodChainList.end(), foodChain.begin());
-    }
+              energy(energyPoints),
+              foodChain(foodChainList.begin(), foodChainList.end()) {}
 
     NCURSES_COLOR_T getColorPair() override { return Omnivore::colorPair; }
 
@@ -22,7 +21,7 @@ public:
     std::vector<char> getFoodChain() const override { return this->foodChain; }
 
 private:
-    const static NCURSES_COLOR_T colorPair = 3;
+    const static NCURSES_COLOR_T colorPair = 5;
     char charID;
     std::vector<char> foodChain;
     int energy;

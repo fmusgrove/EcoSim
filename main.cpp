@@ -15,10 +15,13 @@
 
 #include "species_type.hpp"
 #include "ecosystem_element.hpp"
+#include "plant.hpp"
+#include "herbivore.hpp"
+#include "omnivore.hpp"
 
 using namespace std;
 using WaterObstacleList = vector<pair<Point, char>>;
-using FloraFaunaList = multimap<Point, EcosystemElement>;
+using FloraFaunaList = multimap<Point, unique_ptr<EcosystemElement>>;
 
 void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_ptr<FloraFaunaList> &floraFauna);
 
@@ -69,6 +72,7 @@ int main(int argc, char **argv) {
             // Read the species type
             stringTraitStream >> traitString;
             speciesType = traitString;
+            transform(speciesType.begin(), speciesType.end(), speciesType.begin(), ::tolower);
             // Read the character ID
             stringTraitStream >> traitString;
             speciesID = traitString[0];
@@ -117,12 +121,24 @@ int main(int argc, char **argv) {
         while (getline(mapFile, fileLine)) {
             xPos = 0;
             for (char mapChar : fileLine) {
+                Point location(xPos, yPos);
                 if (mapChar == '~' || mapChar == '#') {
                     // Terrain element
-                    Point location(xPos, yPos);
                     terrain->push_back(pair(location, mapChar));
-                } else {
+                } else if (mapChar != ' ') {
                     // Flora or fauna element
+                    auto foundSpeciesType = speciesList.find(mapChar)->second;
+
+                    if (foundSpeciesType.speciesType == "plant") {
+                        floraFauna->insert(pair(location, make_unique<Plant>(mapChar, foundSpeciesType.regrowthCoeff,
+                                                                             foundSpeciesType.energy)));
+                    } else if (foundSpeciesType.speciesType == "herbivore") {
+                        floraFauna->insert(pair(location, make_unique<Herbivore>(mapChar, foundSpeciesType.foodChain,
+                                                                                 foundSpeciesType.energy)));
+                    } else if (foundSpeciesType.speciesType == "omnivore") {
+                        floraFauna->insert(pair(location, make_unique<Omnivore>(mapChar, foundSpeciesType.foodChain,
+                                                                                foundSpeciesType.energy)));
+                    }
 
                 }
                 xPos++;
@@ -185,10 +201,10 @@ void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_pt
 
     // Draw plants and animals
     for (auto &element: *floraFauna) {
-        attron(COLOR_PAIR(element.second.getColorPair()));
+        attron(COLOR_PAIR(element.second->getColorPair()));
         // Cursor location entered in the form  row, column (y, x)
-        mvaddch(element.first.second, element.first.first, element.second.getCharID());
-        attroff(COLOR_PAIR(element.second.getColorPair()));
+        mvaddch(element.first.second, element.first.first, element.second->getCharID());
+        attroff(COLOR_PAIR(element.second->getColorPair()));
     }
 
     refresh();
