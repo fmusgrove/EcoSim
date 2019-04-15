@@ -6,15 +6,24 @@
 
 class Plant : EcosystemElement {
 public:
-    explicit Plant(const char &characterID) : charID(characterID) {}
+    explicit Plant(const char &characterID, const int regrowthCoefficient, const int energyPoints)
+            : charID(characterID),
+              regrowthCoeff(regrowthCoefficient),
+              energy(energyPoints) {}
 
     NCURSES_COLOR_T getColorPair() override { return Plant::colorPair; }
 
-    char getCharID() override { return this->charID; }
+    char getCharID() const override { return this->charID; }
+
+    int getRegrowthCoeff() const override { return this->regrowthCoeff; }
+
+    int getEnergy() const override { return this->energy; }
 
 private:
     const static NCURSES_COLOR_T colorPair = 1;
     char charID;
+    int regrowthCoeff;
+    int energy;
 };
 
 #endif //ECOSIM_PLANT_HPP
