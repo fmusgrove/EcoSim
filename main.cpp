@@ -23,10 +23,12 @@ using namespace std;
 using WaterObstacleList = vector<pair<Point, char>>;
 using FloraFaunaList = multimap<Point, unique_ptr<EcosystemElement>>;
 
-void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_ptr<FloraFaunaList> &floraFauna);
+void drawMap(WINDOW *window, const unique_ptr<WaterObstacleList> &waterObstacle,
+             const unique_ptr<FloraFaunaList> &floraFauna, const int mapOffsetY, const int mapOffsetX);
 
-// TODO: Make coordinates relative to the map starting point so curses can draw it wherever, such as the
-//  center of the screen
+WINDOW *createWindow(int height, int width, int startY, int startX, bool addBorders);
+
+void destroyWindow(WINDOW *local_win);
 
 struct SpeciesTraits {
 public:
@@ -54,6 +56,7 @@ int main(int argc, char **argv) {
         speciesFilePath = "default_input/species.txt";
     }
 
+    //region Map and file loading
     // Load species list
     ifstream speciesFile(speciesFilePath);
     istringstream stringTraitStream;
@@ -150,11 +153,24 @@ int main(int argc, char **argv) {
         cerr << "Unable to open file '" << mapFilePath << "'" << endl;
         return -1;
     }
+    //endregion
 
+    //region Curses setup
+    const int BANNER_HEIGHT = 20;
     // Initialize curses and setup main screen
     initscr();
+    // Offset to add for centering the map in the console
+    const int MAP_OFFSET_Y = ((LINES - BANNER_HEIGHT) - yPos) / 2;
+    const int MAP_OFFSET_X = (COLS - (xPos - 1)) / 2;
+
+    auto topBanner = createWindow(BANNER_HEIGHT, COLS, 0, 0, false);
+    auto simulationWindow = createWindow(LINES - BANNER_HEIGHT, COLS, BANNER_HEIGHT, 0, true);
     if (has_colors() == FALSE) {
-        printf("Your terminal does not support color\n");
+        wprintw(topBanner, "Your terminal does not support color\n");
+        wprintw(topBanner, "Press any key to run the simulation with the default color profile...\n");
+        wrefresh(topBanner);
+        getch();
+        wclear(topBanner);
     } else {
         start_color();
 
@@ -167,32 +183,66 @@ int main(int argc, char **argv) {
         init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
     }
 
-    drawMap(terrain, floraFauna);
+    // Banner
+    vector<string> bannerLines = {
+            "EEEEEEEEEEEEEEEEEEEEEE                                        SSSSSSSSSSSSSSS   iiii                          \n",
+            "E::::::::::::::::::::E                                      SS:::::::::::::::S i::::i                         \n",
+            "E::::::::::::::::::::E                                     S:::::SSSSSS::::::S  iiii                          \n",
+            "EE::::::EEEEEEEEE::::E                                     S:::::S     SSSSSSS                                \n",
+            "  E:::::E       EEEEEE    cccccccccccccccc   ooooooooooo   S:::::S            iiiiiii    mmmmmmm    mmmmmmm   \n",
+            "  E:::::E               cc:::::::::::::::c oo:::::::::::oo S:::::S            i:::::i  mm:::::::m  m:::::::mm \n",
+            "  E::::::EEEEEEEEEE    c:::::::::::::::::co:::::::::::::::o S::::SSSS          i::::i m::::::::::mm::::::::::m\n",
+            "  E:::::::::::::::E   c:::::::cccccc:::::co:::::ooooo:::::o  SS::::::SSSSS     i::::i m::::::::::::::::::::::m\n",
+            "  E:::::::::::::::E   c::::::c     ccccccco::::o     o::::o    SSS::::::::SS   i::::i m:::::mmm::::::mmm:::::m\n",
+            "  E::::::EEEEEEEEEE   c:::::c             o::::o     o::::o       SSSSSS::::S  i::::i m::::m   m::::m   m::::m\n",
+            "  E:::::E             c:::::c             o::::o     o::::o            S:::::S i::::i m::::m   m::::m   m::::m\n",
+            "  E:::::E       EEEEEEc::::::c     ccccccco::::o     o::::o            S:::::S i::::i m::::m   m::::m   m::::m\n",
+            "EE::::::EEEEEEEE:::::Ec:::::::cccccc:::::co:::::ooooo:::::oSSSSSSS     S:::::Si::::::im::::m   m::::m   m::::m\n",
+            "E::::::::::::::::::::E c:::::::::::::::::co:::::::::::::::oS::::::SSSSSS:::::Si::::::im::::m   m::::m   m::::m\n",
+            "E::::::::::::::::::::E  cc:::::::::::::::c oo:::::::::::oo S:::::::::::::::SS i::::::im::::m   m::::m   m::::m\n",
+            "EEEEEEEEEEEEEEEEEEEEEE    cccccccccccccccc   ooooooooooo    SSSSSSSSSSSSSSS   iiiiiiiimmmmmm   mmmmmm   mmmmmm\n"
+    };
+
+    // Draw the banner
+    int bannerRow = 2;
+    int bannerWidth = bannerLines[0].length() - 1; // Exclude newline character
+    for (string &line: bannerLines) {
+        mvwprintw(topBanner, bannerRow, (COLS - bannerWidth) / 2, line.c_str());
+        bannerRow++;
+    }
+    wrefresh(topBanner);
+    //endregion
+
+    drawMap(simulationWindow, terrain, floraFauna, MAP_OFFSET_Y, MAP_OFFSET_X);
+    wmove(simulationWindow, 0, 0);
 
     // Wait for user input
-    getch();
+    wgetch(simulationWindow);
 
+    destroyWindow(topBanner);
+    destroyWindow(simulationWindow);
     // End curses mode and exit
     endwin();
     return 0;
 }
 
-void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_ptr<FloraFaunaList> &floraFauna) {
+void drawMap(WINDOW *window, const unique_ptr<WaterObstacleList> &waterObstacle,
+             const unique_ptr<FloraFaunaList> &floraFauna, const int mapOffsetY, const int mapOffsetX) {
+    // Cursor location entered in the form  row, column (y, x)
     // Draw terrain
     for (auto &pointCharPair: *waterObstacle) {
         switch (pointCharPair.second) {
             case '~' :
                 // Water
-                attron(COLOR_PAIR(2));
-                // Cursor location entered in the form  row, column (y, x)
-                mvaddch(pointCharPair.first.second, pointCharPair.first.first, '~');
-                attroff(COLOR_PAIR(2));
+                wattron(window, COLOR_PAIR(2));
+                mvwaddch(window, pointCharPair.first.second + mapOffsetY, pointCharPair.first.first + mapOffsetX, '~');
+                wattroff(window, COLOR_PAIR(2));
                 break;
             case '#':
                 // Obstacle
-                attron(COLOR_PAIR(3));
-                mvaddch(pointCharPair.first.second, pointCharPair.first.first, '#');
-                attroff(COLOR_PAIR(3));
+                wattron(window, COLOR_PAIR(3));
+                mvwaddch(window, pointCharPair.first.second + mapOffsetY, pointCharPair.first.first + mapOffsetX, '#');
+                wattroff(window, COLOR_PAIR(3));
                 break;
             default:
                 break;
@@ -201,11 +251,30 @@ void drawMap(const unique_ptr<WaterObstacleList> &waterObstacle, const unique_pt
 
     // Draw plants and animals
     for (auto &element: *floraFauna) {
-        attron(COLOR_PAIR(element.second->getColorPair()));
-        // Cursor location entered in the form  row, column (y, x)
-        mvaddch(element.first.second, element.first.first, element.second->getCharID());
-        attroff(COLOR_PAIR(element.second->getColorPair()));
+        wattron(window, COLOR_PAIR(element.second->getColorPair()));
+        mvwaddch(window, element.first.second + mapOffsetY, element.first.first + mapOffsetX,
+                 element.second->getCharID());
+        wattroff(window, COLOR_PAIR(element.second->getColorPair()));
     }
 
-    refresh();
+    wrefresh(window);
+}
+
+WINDOW *createWindow(int height, int width, int startY, int startX, bool addBorders) {
+    auto local_win = newwin(height, width, startY, startX);
+    // Add border around the window
+    if (addBorders) {
+        box(local_win, 0, 0);
+    }
+    // Show the border
+    wrefresh(local_win);
+    return local_win;
+}
+
+void destroyWindow(WINDOW *local_win) {
+    // Erase the window borders
+    wborder(local_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+    wrefresh(local_win);
+    // Remove the window
+    delwin(local_win);
 }
