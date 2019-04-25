@@ -20,10 +20,10 @@ public:
     vector<char> foodChain;
 };
 
-void drawMap(WINDOW *window, const MapManager &mapManager, const int mapOffsetY, const int mapOffsetX) {
+void drawMap(WINDOW *window, const int mapOffsetY, const int mapOffsetX) {
     // Cursor location entered in the form row, column (y, x)
     // Draw terrain
-    for (auto &pointCharPair: *mapManager.terrain) {
+    for (auto &pointCharPair: *MapManager::terrain) {
         switch (pointCharPair.second) {
             case '~' :
                 // Water
@@ -43,7 +43,7 @@ void drawMap(WINDOW *window, const MapManager &mapManager, const int mapOffsetY,
     }
 
     // Draw plants and animals
-    for (auto &element: *mapManager.floraFauna) {
+    for (auto &element: *MapManager::floraFauna) {
         wattron(window, COLOR_PAIR(element.second->getColorPair()));
         mvwaddch(window, element.first.second + mapOffsetY, element.first.first + mapOffsetX,
                  element.second->getCharID());

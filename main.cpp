@@ -25,7 +25,6 @@ using namespace std;
 int main(int argc, char **argv) {
     string script_filepath(argv[0]);
     string mapFilePath, speciesFilePath, fileLine;
-    MapManager mapManager;
 
     // Get arguments and set default map and species files if none are specified
     if (argc >= 3) {
@@ -110,21 +109,21 @@ int main(int argc, char **argv) {
                 Point location(xPos, yPos);
                 if (mapChar == '~' || mapChar == '#') {
                     // Terrain element
-                    mapManager.terrain->insert(pair(location, mapChar));
+                    MapManager::terrain->insert(pair(location, mapChar));
                 } else if (mapChar != ' ') {
                     // Flora or fauna element
                     auto foundSpeciesType = speciesList.find(mapChar)->second;
 
                     if (foundSpeciesType.speciesType == "plant") {
-                        mapManager.floraFauna->insert(
+                        MapManager::floraFauna->insert(
                                 pair(location, make_unique<Plant>(mapChar, location, foundSpeciesType.regrowthCoeff,
                                                                   foundSpeciesType.energy)));
                     } else if (foundSpeciesType.speciesType == "herbivore") {
-                        mapManager.floraFauna->insert(
+                        MapManager::floraFauna->insert(
                                 pair(location, make_unique<Herbivore>(mapChar, location, foundSpeciesType.foodChain,
                                                                       foundSpeciesType.energy)));
                     } else if (foundSpeciesType.speciesType == "omnivore") {
-                        mapManager.floraFauna->insert(
+                        MapManager::floraFauna->insert(
                                 pair(location, make_unique<Omnivore>(mapChar, location, foundSpeciesType.foodChain,
                                                                      foundSpeciesType.energy)));
                     }
@@ -201,7 +200,7 @@ int main(int argc, char **argv) {
     wrefresh(topBanner);
     //endregion
 
-    drawMap(simulationWindow, mapManager, MAP_OFFSET_Y, MAP_OFFSET_X);
+    drawMap(simulationWindow, MAP_OFFSET_Y, MAP_OFFSET_X);
 
     mvwprintw(topBanner, 0, 0, "RUNNING");
     wrefresh(topBanner);
@@ -210,25 +209,25 @@ int main(int argc, char **argv) {
     int tickCount = 10;
 
     for (int tickNum = 0; tickNum < tickCount; tickNum++) {
-        for (auto &element: *mapManager.floraFauna) {
+        for (auto &element: *MapManager::floraFauna) {
             if (element.second->getSpeciesType() == SpeciesType::PLANT) {
                 element.second->tick();
             }
         }
 
-        for (auto &element: *mapManager.floraFauna) {
+        for (auto &element: *MapManager::floraFauna) {
             if (element.second->getSpeciesType() == SpeciesType::HERBIVORE) {
                 element.second->tick();
             }
         }
 
-        for (auto &element: *mapManager.floraFauna) {
+        for (auto &element: *MapManager::floraFauna) {
             if (element.second->getSpeciesType() == SpeciesType::OMNIVORE) {
                 element.second->tick();
             }
         }
 
-        drawMap(simulationWindow, mapManager, MAP_OFFSET_Y, MAP_OFFSET_X);
+        drawMap(simulationWindow, MAP_OFFSET_Y, MAP_OFFSET_X);
         // Sleep to allow the user to see the result of each simulation cycle
         this_thread::sleep_for(chrono::milliseconds(500));
     }

@@ -1,10 +1,12 @@
 #ifndef ECOSIM_MAP_MANAGER_HPP
 #define ECOSIM_MAP_MANAGER_HPP
 
-#import <vector>
-#import <map>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <unordered_map>
 
-#import "ecosystem_element.hpp"
+#include "ecosystem_element.hpp"
 
 using namespace std;
 
@@ -16,14 +18,16 @@ class MapManager {
 public:
     explicit MapManager();
 
-    vector<Point> edibleFloraFaunaNearby(const EcosystemElement &element);
+    static vector<Point> edibleFloraFaunaNearby(const shared_ptr<EcosystemElement> &element);
 
-    vector<Point> freeLocations(const EcosystemElement &element);
+    static vector<Point> freeLocations(const shared_ptr<EcosystemElement> &element);
 
-//    void moveElement(const EcosystemElement &ecosystemElement, const Point &newLocation);
+    static void moveElement(shared_ptr<EcosystemElement> &elementToMove, const Point &newLocation);
 
-    unique_ptr<FloraFaunaList> floraFauna;
-    unique_ptr<WaterObstacleList> terrain;
+//    static void eatElement(const EcosystemElement &elementEating, const Point &locationToEat);
+
+    static unique_ptr<FloraFaunaList> floraFauna;
+    static unique_ptr<WaterObstacleList> terrain;
 };
 
 
