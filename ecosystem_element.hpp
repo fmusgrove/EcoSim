@@ -2,8 +2,10 @@
 #define ECOSIM_ECOSYSTEM_ELEMENT_HPP
 
 #include <utility>
-#include "ncurses.h"
 #include <vector>
+#include "ncurses.h"
+
+#include "species_type.hpp"
 
 using Point = std::pair<int, int>;
 
@@ -13,7 +15,11 @@ using Point = std::pair<int, int>;
  */
 class EcosystemElement {
 public:
+    virtual void tick() {}
+
     virtual NCURSES_COLOR_T getColorPair() { return EcosystemElement::colorPair; }
+
+    virtual SpeciesType getSpeciesType() { return EcosystemElement::speciesType; }
 
     virtual char getCharID() const { return this->charID; }
 
@@ -23,8 +29,10 @@ public:
 
     virtual std::vector<char> getFoodChain() const { return this->foodChain; }
 
+    Point cachedLocation;
 private:
     const static NCURSES_COLOR_T colorPair = 0;
+    const static SpeciesType speciesType = SpeciesType::GENERAL_ELEMENT;
     const char charID = '?';
     int regrowthCoeff = -1;
     int energy = -1;
