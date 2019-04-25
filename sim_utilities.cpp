@@ -9,7 +9,7 @@
 #include "map_manager.hpp"
 
 using namespace std;
-using WaterObstacleList = vector<pair<Point, char>>;
+using WaterObstacleList = map<Point, char>;
 using FloraFaunaList = multimap<Point, unique_ptr<EcosystemElement>>;
 
 struct SpeciesTraits {
@@ -20,10 +20,10 @@ public:
     vector<char> foodChain;
 };
 
-void drawMap(WINDOW *window, const FloraFaunaManager &floraFaunaManager, const int mapOffsetY, const int mapOffsetX) {
+void drawMap(WINDOW *window, const MapManager &mapManager, const int mapOffsetY, const int mapOffsetX) {
     // Cursor location entered in the form row, column (y, x)
     // Draw terrain
-    for (auto &pointCharPair: *floraFaunaManager.terrain) {
+    for (auto &pointCharPair: *mapManager.terrain) {
         switch (pointCharPair.second) {
             case '~' :
                 // Water
@@ -43,7 +43,7 @@ void drawMap(WINDOW *window, const FloraFaunaManager &floraFaunaManager, const i
     }
 
     // Draw plants and animals
-    for (auto &element: *floraFaunaManager.floraFauna) {
+    for (auto &element: *mapManager.floraFauna) {
         wattron(window, COLOR_PAIR(element.second->getColorPair()));
         mvwaddch(window, element.first.second + mapOffsetY, element.first.first + mapOffsetX,
                  element.second->getCharID());

@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
                 Point location(xPos, yPos);
                 if (mapChar == '~' || mapChar == '#') {
                     // Terrain element
-                    mapManager.terrain->push_back(pair(location, mapChar));
+                    mapManager.terrain->insert(pair(location, mapChar));
                 } else if (mapChar != ' ') {
                     // Flora or fauna element
                     auto foundSpeciesType = speciesList.find(mapChar)->second;
