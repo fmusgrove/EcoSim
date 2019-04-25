@@ -17,9 +17,13 @@ class EcosystemElement {
 public:
     virtual void tick() {}
 
-    virtual NCURSES_COLOR_T getColorPair() { return EcosystemElement::colorPair; }
+    virtual NCURSES_COLOR_T getColorPair() const { return EcosystemElement::colorPair; }
 
-    virtual SpeciesType getSpeciesType() { return EcosystemElement::speciesType; }
+    virtual SpeciesType getSpeciesType() const { return EcosystemElement::speciesType; }
+
+    virtual Point getCachedLocation() const { return this->cachedLocation; }
+
+    virtual void setCachedLocation(const Point &location) { this->cachedLocation = location; }
 
     virtual char getCharID() const { return this->charID; }
 
@@ -29,10 +33,10 @@ public:
 
     virtual std::vector<char> getFoodChain() const { return this->foodChain; }
 
-    Point cachedLocation;
 private:
     const static NCURSES_COLOR_T colorPair = 0;
     const static SpeciesType speciesType = SpeciesType::GENERAL_ELEMENT;
+    Point cachedLocation;
     const char charID = '?';
     int regrowthCoeff = -1;
     int energy = -1;

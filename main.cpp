@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <map>
+#include <unordered_map>
 #include "ncurses.h"
 
 #include "sim_utilities.cpp"
@@ -109,21 +111,21 @@ int main(int argc, char **argv) {
                 Point location(xPos, yPos);
                 if (mapChar == '~' || mapChar == '#') {
                     // Terrain element
-                    MapManager::terrain->insert(pair(location, mapChar));
+                    MapManager::terrain.insert(pair(location, mapChar));
                 } else if (mapChar != ' ') {
                     // Flora or fauna element
                     auto foundSpeciesType = speciesList.find(mapChar)->second;
 
                     if (foundSpeciesType.speciesType == "plant") {
-                        MapManager::floraFauna->insert(
+                        MapManager::floraFauna.insert(
                                 pair(location, make_unique<Plant>(mapChar, location, foundSpeciesType.regrowthCoeff,
                                                                   foundSpeciesType.energy)));
                     } else if (foundSpeciesType.speciesType == "herbivore") {
-                        MapManager::floraFauna->insert(
+                        MapManager::floraFauna.insert(
                                 pair(location, make_unique<Herbivore>(mapChar, location, foundSpeciesType.foodChain,
                                                                       foundSpeciesType.energy)));
                     } else if (foundSpeciesType.speciesType == "omnivore") {
-                        MapManager::floraFauna->insert(
+                        MapManager::floraFauna.insert(
                                 pair(location, make_unique<Omnivore>(mapChar, location, foundSpeciesType.foodChain,
                                                                      foundSpeciesType.energy)));
                     }
@@ -209,19 +211,19 @@ int main(int argc, char **argv) {
     int tickCount = 10;
 
     for (int tickNum = 0; tickNum < tickCount; tickNum++) {
-        for (auto &element: *MapManager::floraFauna) {
+        for (auto &element: MapManager::floraFauna) {
             if (element.second->getSpeciesType() == SpeciesType::PLANT) {
                 element.second->tick();
             }
         }
 
-        for (auto &element: *MapManager::floraFauna) {
+        for (auto &element: MapManager::floraFauna) {
             if (element.second->getSpeciesType() == SpeciesType::HERBIVORE) {
                 element.second->tick();
             }
         }
 
-        for (auto &element: *MapManager::floraFauna) {
+        for (auto &element: MapManager::floraFauna) {
             if (element.second->getSpeciesType() == SpeciesType::OMNIVORE) {
                 element.second->tick();
             }

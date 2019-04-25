@@ -19,9 +19,13 @@ public:
 
     void tick() override;
 
-    NCURSES_COLOR_T getColorPair() override { return Omnivore::colorPair; }
+    NCURSES_COLOR_T getColorPair() const override { return Omnivore::colorPair; }
 
-    SpeciesType getSpeciesType() override { return Omnivore::speciesType; }
+    SpeciesType getSpeciesType() const override { return Omnivore::speciesType; }
+
+    Point getCachedLocation() const override { return this->cachedLocation; }
+
+    void setCachedLocation(const Point &location) override { this->cachedLocation = location; }
 
     char getCharID() const override { return this->charID; }
 
@@ -29,10 +33,10 @@ public:
 
     std::vector<char> getFoodChain() const override { return this->foodChain; }
 
-    Point cachedLocation;
 private:
     const static NCURSES_COLOR_T colorPair = 5;
     const static SpeciesType speciesType = SpeciesType::OMNIVORE;
+    Point cachedLocation;
     char charID;
     std::vector<char> foodChain;
     const int maxEnergy;

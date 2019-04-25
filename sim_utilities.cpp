@@ -1,16 +1,12 @@
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <map>
-#include <unordered_map>
-#include "ncurses.h"
+#ifndef ECOSIM_SIM_UTILITIES_CPP
+#define ECOSIM_SIM_UTILITIES_CPP
 
+#include <string>
+#include "ncurses.h"
 #include "ecosystem_element.hpp"
 #include "map_manager.hpp"
 
 using namespace std;
-using WaterObstacleList = map<Point, char>;
-using FloraFaunaList = multimap<Point, unique_ptr<EcosystemElement>>;
 
 struct SpeciesTraits {
 public:
@@ -23,7 +19,7 @@ public:
 void drawMap(WINDOW *window, const int mapOffsetY, const int mapOffsetX) {
     // Cursor location entered in the form row, column (y, x)
     // Draw terrain
-    for (auto &pointCharPair: *MapManager::terrain) {
+    for (auto &pointCharPair: MapManager::terrain) {
         switch (pointCharPair.second) {
             case '~' :
                 // Water
@@ -43,7 +39,7 @@ void drawMap(WINDOW *window, const int mapOffsetY, const int mapOffsetX) {
     }
 
     // Draw plants and animals
-    for (auto &element: *MapManager::floraFauna) {
+    for (auto &element: MapManager::floraFauna) {
         wattron(window, COLOR_PAIR(element.second->getColorPair()));
         mvwaddch(window, element.first.second + mapOffsetY, element.first.first + mapOffsetX,
                  element.second->getCharID());
@@ -71,3 +67,5 @@ void destroyWindow(WINDOW *local_win) {
     // Remove the window
     delwin(local_win);
 }
+
+#endif //ECOSIM_SIM_UTILITIES_CPP

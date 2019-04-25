@@ -18,9 +18,13 @@ public:
 
     void doEat();
 
-    NCURSES_COLOR_T getColorPair() override { return Plant::colorPair; }
+    NCURSES_COLOR_T getColorPair() const override { return Plant::colorPair; }
 
-    SpeciesType getSpeciesType() override { return Plant::speciesType; }
+    SpeciesType getSpeciesType() const override { return Plant::speciesType; }
+
+    Point getCachedLocation() const override { return this->cachedLocation; }
+
+    void setCachedLocation(const Point &location) override { this->cachedLocation = location; }
 
     char getCharID() const override { return this->charID; }
 
@@ -28,10 +32,10 @@ public:
 
     int getEnergy() const override { return this->energy; }
 
-    Point cachedLocation;
 private:
     NCURSES_COLOR_T colorPair = 1;
     const static SpeciesType speciesType = SpeciesType::PLANT;
+    Point cachedLocation;
     char charID;
     int regrowthCoeff;
     int energy;

@@ -19,9 +19,13 @@ public:
 
     void tick() override;
 
-    NCURSES_COLOR_T getColorPair() override { return Herbivore::colorPair; }
+    NCURSES_COLOR_T getColorPair() const override { return Herbivore::colorPair; }
 
-    SpeciesType getSpeciesType() override { return Herbivore::speciesType; }
+    SpeciesType getSpeciesType() const override { return Herbivore::speciesType; }
+
+    Point getCachedLocation() const override { return this->cachedLocation; }
+
+    void setCachedLocation(const Point &location) override { this->cachedLocation = location; }
 
     char getCharID() const override { return this->charID; }
 
@@ -29,10 +33,10 @@ public:
 
     std::vector<char> getFoodChain() const override { return this->foodChain; }
 
-    Point cachedLocation;
 private:
     const static NCURSES_COLOR_T colorPair = 4;
     const static SpeciesType speciesType = SpeciesType::HERBIVORE;
+    Point cachedLocation;
     char charID;
     std::vector<char> foodChain;
     const int maxEnergy;
