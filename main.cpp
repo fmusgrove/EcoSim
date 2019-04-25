@@ -7,12 +7,13 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <vector>
-#include <map>
-#include <unordered_map>
 #include <algorithm>
+#include <chrono>
+#include <thread>
 #include "ncurses.h"
 
+#include "sim_utilities.cpp"
+#include "map_manager.hpp"
 #include "species_type.hpp"
 #include "ecosystem_element.hpp"
 #include "plant.hpp"
@@ -20,29 +21,11 @@
 #include "omnivore.hpp"
 
 using namespace std;
-using WaterObstacleList = vector<pair<Point, char>>;
-using FloraFaunaList = multimap<Point, unique_ptr<EcosystemElement>>;
-
-void drawMap(WINDOW *window, const unique_ptr<WaterObstacleList> &waterObstacle,
-             const unique_ptr<FloraFaunaList> &floraFauna, const int mapOffsetY, const int mapOffsetX);
-
-WINDOW *createWindow(int height, int width, int startY, int startX, bool addBorders);
-
-void destroyWindow(WINDOW *local_win);
-
-struct SpeciesTraits {
-public:
-    string speciesType;
-    int regrowthCoeff;
-    int energy;
-    vector<char> foodChain;
-};
 
 int main(int argc, char **argv) {
     string script_filepath(argv[0]);
     string mapFilePath, speciesFilePath, fileLine;
-    auto floraFauna = make_unique<FloraFaunaList>();
-    auto terrain = make_unique<WaterObstacleList>();
+    MapManager mapManager;
 
     // Get arguments and set default map and species files if none are specified
     if (argc >= 3) {
@@ -94,7 +77,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
 
-                // Set regrowth coefficient for plants and energy levels for both plants and animals
+                // Set regrowth coefficient for plants and maximum energy levels for both plants and animals
                 if (speciesType == "plant") {
                     if (regrowthCoeff == -1) {
                         regrowthCoeff = stoi(traitString);
@@ -127,20 +110,23 @@ int main(int argc, char **argv) {
                 Point location(xPos, yPos);
                 if (mapChar == '~' || mapChar == '#') {
                     // Terrain element
-                    terrain->push_back(pair(location, mapChar));
+                    mapManager.terrain->push_back(pair(location, mapChar));
                 } else if (mapChar != ' ') {
                     // Flora or fauna element
                     auto foundSpeciesType = speciesList.find(mapChar)->second;
 
                     if (foundSpeciesType.speciesType == "plant") {
-                        floraFauna->insert(pair(location, make_unique<Plant>(mapChar, foundSpeciesType.regrowthCoeff,
-                                                                             foundSpeciesType.energy)));
+                        mapManager.floraFauna->insert(
+                                pair(location, make_unique<Plant>(mapChar, location, foundSpeciesType.regrowthCoeff,
+                                                                  foundSpeciesType.energy)));
                     } else if (foundSpeciesType.speciesType == "herbivore") {
-                        floraFauna->insert(pair(location, make_unique<Herbivore>(mapChar, foundSpeciesType.foodChain,
-                                                                                 foundSpeciesType.energy)));
+                        mapManager.floraFauna->insert(
+                                pair(location, make_unique<Herbivore>(mapChar, location, foundSpeciesType.foodChain,
+                                                                      foundSpeciesType.energy)));
                     } else if (foundSpeciesType.speciesType == "omnivore") {
-                        floraFauna->insert(pair(location, make_unique<Omnivore>(mapChar, foundSpeciesType.foodChain,
-                                                                                foundSpeciesType.energy)));
+                        mapManager.floraFauna->insert(
+                                pair(location, make_unique<Omnivore>(mapChar, location, foundSpeciesType.foodChain,
+                                                                     foundSpeciesType.energy)));
                     }
 
                 }
@@ -181,9 +167,11 @@ int main(int argc, char **argv) {
         init_pair(3, COLOR_RED, COLOR_BLACK);
         init_pair(4, COLOR_YELLOW, COLOR_BLACK);
         init_pair(5, COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(6, COLOR_CYAN, COLOR_BLACK);
     }
 
     // Banner
+    wattron(topBanner, COLOR_PAIR(1));
     vector<string> bannerLines = {
             "EEEEEEEEEEEEEEEEEEEEEE                                        SSSSSSSSSSSSSSS   iiii                          \n",
             "E::::::::::::::::::::E                                      SS:::::::::::::::S i::::i                         \n",
@@ -213,8 +201,39 @@ int main(int argc, char **argv) {
     wrefresh(topBanner);
     //endregion
 
-    drawMap(simulationWindow, terrain, floraFauna, MAP_OFFSET_Y, MAP_OFFSET_X);
-    wmove(simulationWindow, 0, 0);
+    drawMap(simulationWindow, mapManager, MAP_OFFSET_Y, MAP_OFFSET_X);
+
+    mvwprintw(topBanner, 0, 0, "RUNNING");
+    wrefresh(topBanner);
+
+    //region Main simulation tick loop
+    int tickCount = 10;
+
+    for (int tickNum = 0; tickNum < tickCount; tickNum++) {
+        for (auto &element: *mapManager.floraFauna) {
+            if (element.second->getSpeciesType() == SpeciesType::PLANT) {
+                element.second->tick();
+            }
+        }
+
+        for (auto &element: *mapManager.floraFauna) {
+            if (element.second->getSpeciesType() == SpeciesType::HERBIVORE) {
+                element.second->tick();
+            }
+        }
+
+        for (auto &element: *mapManager.floraFauna) {
+            if (element.second->getSpeciesType() == SpeciesType::OMNIVORE) {
+                element.second->tick();
+            }
+        }
+
+        drawMap(simulationWindow, mapManager, MAP_OFFSET_Y, MAP_OFFSET_X);
+        // Sleep to allow the user to see the result of each simulation cycle
+        this_thread::sleep_for(chrono::milliseconds(500));
+    }
+
+    //endregion
 
     // Wait for user input
     wgetch(simulationWindow);
@@ -224,57 +243,4 @@ int main(int argc, char **argv) {
     // End curses mode and exit
     endwin();
     return 0;
-}
-
-void drawMap(WINDOW *window, const unique_ptr<WaterObstacleList> &waterObstacle,
-             const unique_ptr<FloraFaunaList> &floraFauna, const int mapOffsetY, const int mapOffsetX) {
-    // Cursor location entered in the form  row, column (y, x)
-    // Draw terrain
-    for (auto &pointCharPair: *waterObstacle) {
-        switch (pointCharPair.second) {
-            case '~' :
-                // Water
-                wattron(window, COLOR_PAIR(2));
-                mvwaddch(window, pointCharPair.first.second + mapOffsetY, pointCharPair.first.first + mapOffsetX, '~');
-                wattroff(window, COLOR_PAIR(2));
-                break;
-            case '#':
-                // Obstacle
-                wattron(window, COLOR_PAIR(3));
-                mvwaddch(window, pointCharPair.first.second + mapOffsetY, pointCharPair.first.first + mapOffsetX, '#');
-                wattroff(window, COLOR_PAIR(3));
-                break;
-            default:
-                break;
-        }
-    }
-
-    // Draw plants and animals
-    for (auto &element: *floraFauna) {
-        wattron(window, COLOR_PAIR(element.second->getColorPair()));
-        mvwaddch(window, element.first.second + mapOffsetY, element.first.first + mapOffsetX,
-                 element.second->getCharID());
-        wattroff(window, COLOR_PAIR(element.second->getColorPair()));
-    }
-
-    wrefresh(window);
-}
-
-WINDOW *createWindow(int height, int width, int startY, int startX, bool addBorders) {
-    auto local_win = newwin(height, width, startY, startX);
-    // Add border around the window
-    if (addBorders) {
-        box(local_win, 0, 0);
-    }
-    // Show the border
-    wrefresh(local_win);
-    return local_win;
-}
-
-void destroyWindow(WINDOW *local_win) {
-    // Erase the window borders
-    wborder(local_win, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
-    wrefresh(local_win);
-    // Remove the window
-    delwin(local_win);
 }

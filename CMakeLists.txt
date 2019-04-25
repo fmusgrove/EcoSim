@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
-add_executable(EcoSim main.cpp species_type.hpp ecosystem_element.cpp ecosystem_element.hpp plant.cpp plant.hpp herbivore.cpp herbivore.hpp omnivore.cpp omnivore.hpp)
+add_executable(EcoSim main.cpp species_type.hpp ecosystem_element.cpp ecosystem_element.hpp plant.cpp plant.hpp herbivore.cpp herbivore.hpp omnivore.cpp omnivore.hpp sim_utilities.cpp map_manager.cpp map_manager.hpp)
 target_link_libraries(EcoSim ${CURSES_LIBRARIES})
