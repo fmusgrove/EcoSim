@@ -1,15 +1,15 @@
 #ifndef ECOSIM_MAP_MANAGER_HPP
 #define ECOSIM_MAP_MANAGER_HPP
 
-#import <vector>
-#import <map>
+#include <vector>
+#include <map>
 
-#import "ecosystem_element.hpp"
+#include "ecosystem_element.hpp"
 
 using namespace std;
 
-using WaterObstacleList = map<Point, char>;
 using FloraFaunaList = multimap<Point, unique_ptr<EcosystemElement>>;
+using WaterObstacleList = map<Point, char>;
 
 
 class MapManager {
@@ -20,10 +20,14 @@ public:
 
     static void moveElement(EcosystemElement &elementToMove, const Point &newLocation);
 
-//    static void eatElement(const EcosystemElement &elementEating, const Point &locationToEat);
+    static void eatElement(EcosystemElement &elementEating, const Point &locationToEat);
+
+    static void killElement(EcosystemElement &element);
 
     static FloraFaunaList floraFauna;
     static WaterObstacleList terrain;
+    static int mapRows;
+    static int mapColumns;
 };
 
 

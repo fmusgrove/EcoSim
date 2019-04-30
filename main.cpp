@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
         mapColumns--;
         MapManager::mapColumns = mapColumns;
 
-        cout << "Map with " << MapManager::mapRows << " rows and " << MapManager::mapColumns << " columns loaded."
+        cout << "Map with " << MapManager::mapRows << " rows and " << MapManager::mapColumns << " columns loaded"
              << endl;
 
         mapFile.close();
