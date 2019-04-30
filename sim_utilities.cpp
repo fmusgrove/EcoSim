@@ -133,10 +133,16 @@ namespace SimUtilities {
         return userInputStr;
     }
 
-    std::vector<Point> random_select(const std::vector<Point> &locations, size_t count) {
+    std::vector<Point> randomSelect(const std::vector<Point> &locations, size_t count) {
         vector<Point> selection;
         std::sample(locations.begin(), locations.end(), std::back_inserter(selection),
-                    count, std::mt19937{std::random_device{}()});
+                    count, mt19937{random_device{}()});
         return selection;
+    }
+
+    double getValUniformRandDist() {
+        mt19937::result_type seed = time(0);
+        auto realRand = bind(uniform_real_distribution<double>(0, 1), mt19937(seed));
+        return realRand();
     }
 }

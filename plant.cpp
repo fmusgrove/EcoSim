@@ -11,7 +11,7 @@ void Plant::tick() {
 
 }
 
-void Plant::doEat() {
+void Plant::makeEaten() {
     isGrown = false;
     regrowthStep = 0;
     colorPair = 6;

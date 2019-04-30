@@ -29,7 +29,11 @@ public:
 
     char getCharID() const override { return this->charID; }
 
-    int getEnergy() const override { return this->maxEnergy; }
+    int getCurrentEnergy() const override { return this->currentEnergy; }
+
+    void setCurrentEnergy(const int energyToSet) override { this->currentEnergy = energyToSet; }
+
+    int getMaxEnergy() const override { return this->maxEnergy; }
 
     std::vector<char> getFoodChain() const override { return this->foodChain; }
 
@@ -37,10 +41,10 @@ private:
     const static NCURSES_COLOR_T colorPair = 4;
     const static SpeciesType speciesType = SpeciesType::HERBIVORE;
     Point cachedLocation;
-    char charID;
+    const char charID;
     std::vector<char> foodChain;
-    const int maxEnergy;
     int currentEnergy;
+    int maxEnergy;
 };
 
 #endif //ECOSIM_HERBIVORE_HPP

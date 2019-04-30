@@ -8,11 +8,6 @@ WaterObstacleList MapManager::terrain = {};
 int MapManager::mapRows = 0;
 int MapManager::mapColumns = 0;
 
-/**
- * Returns a vector of locations that contain edible food around the element
- * @param element ecosystem element to check surroundings on
- * @return vector of points that contain edible food
- */
 vector<Point> MapManager::edibleFloraFaunaNearby(const EcosystemElement &element) {
     vector<Point> edibleLocations;
     Point location(element.getCachedLocation());
@@ -44,11 +39,6 @@ vector<Point> MapManager::edibleFloraFaunaNearby(const EcosystemElement &element
     return edibleLocations;
 }
 
-/**
- * Returns a vector of empty locations on the map around the element
- * @param element ecosystem element to check surroundings on
- * @return vector of points that are free locations to move to
- */
 vector<Point> MapManager::freeLocations(const EcosystemElement &element) {
     vector<Point> availableLocations;
     Point location(element.getCachedLocation());
@@ -101,11 +91,28 @@ vector<Point> MapManager::freeLocations(const EcosystemElement &element) {
     return availableLocations;
 }
 
-/**
- * Moves an element to the specified location
- * @param ecosystemElement element to move
- * @param newLocation new location for the element to occupy
- */
+vector<Point> MapManager::nearbyMates(const EcosystemElement &element) {
+    vector<Point> matesNearby;
+    Point location(element.getCachedLocation());
+
+    vector<Point> cardinalPoints = {Point(location.first, location.second - 1),
+                                    Point(location.first, location.second + 1),
+                                    Point(location.first + 1, location.second),
+                                    Point(location.first - 1, location.second)};
+
+    for (Point &pointToCheck: cardinalPoints) {
+        auto foundElementIter = MapManager::floraFauna.find(pointToCheck);
+        if (foundElementIter != MapManager::floraFauna.end()) {
+            if (foundElementIter->second->getSpeciesType() == element.getSpeciesType() &&
+                foundElementIter->second->getCurrentEnergy() > (0.5 * foundElementIter->second->getMaxEnergy())) {
+                matesNearby.push_back(pointToCheck);
+            }
+        }
+    }
+
+    return matesNearby;
+}
+
 void MapManager::moveElement(EcosystemElement &elementToMove, const Point &newLocation) {
     // Extract the element(s) at the old location
     auto foundElements = MapManager::floraFauna.equal_range(elementToMove.getCachedLocation());
@@ -129,11 +136,6 @@ void MapManager::moveElement(EcosystemElement &elementToMove, const Point &newLo
     elementToMove.setCurrentEnergy(elementToMove.getCurrentEnergy() - 1);
 }
 
-/**
- * Moves the element doing the eating to the position of the animal to be eaten and consumes them
- * @param elementEating element doing the eating
- * @param locationToEat point location for the targeted element to be eaten
- */
 void MapManager::eatElement(EcosystemElement &elementEating, const Point &locationToEat) {
     // Find element at the location
     auto elementToEatIter = MapManager::floraFauna.find(locationToEat);
@@ -152,10 +154,6 @@ void MapManager::eatElement(EcosystemElement &elementEating, const Point &locati
     }
 }
 
-/**
- * Removes the element from the simulation
- * @param element element to remove
- */
 void MapManager::killElement(EcosystemElement &element) {
     // Extract the element(s) at the location
     auto foundElements = MapManager::floraFauna.equal_range(element.getCachedLocation());

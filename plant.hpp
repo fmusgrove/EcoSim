@@ -16,7 +16,7 @@ public:
 
     void tick() override;
 
-    void doEat();
+    void makeEaten() override;
 
     NCURSES_COLOR_T getColorPair() const override { return Plant::colorPair; }
 
@@ -30,17 +30,19 @@ public:
 
     int getRegrowthCoeff() const override { return this->regrowthCoeff; }
 
-    int getEnergy() const override { return this->energy; }
+    int getCurrentEnergy() const override { return this->energy; }
+
+    bool getIsGrown() const override { return isGrown; }
 
 private:
     NCURSES_COLOR_T colorPair = 1;
     const static SpeciesType speciesType = SpeciesType::PLANT;
     Point cachedLocation;
-    char charID;
-    int regrowthCoeff;
-    int energy;
+    const char charID;
+    const int regrowthCoeff;
     int regrowthStep = 0;
     bool isGrown = true;
+    int energy;
 };
 
 #endif //ECOSIM_PLANT_HPP

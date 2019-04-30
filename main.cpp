@@ -236,10 +236,13 @@ int main(int argc, char **argv) {
     bool shouldStop = false;
     int tickCount;
     while (!shouldStop) {
+#ifndef DEBUG_MODE
         // Prompt user for number of simulation loops to run
         tickCount = SimUtilities::windowPromptInt(commandWindow, "Enter the number of simulation loops to run: ", 10);
         SimUtilities::printStringToWindow(commandWindow, "Running Simulation", true);
-
+#else
+        tickCount = 20;
+#endif
 
         // Run the simulation for the defined number of steps
         for (int tickNum = 0; tickNum < tickCount; tickNum++) {
@@ -272,7 +275,7 @@ int main(int argc, char **argv) {
             this_thread::sleep_for(chrono::milliseconds(500));
         }
 
-
+#ifndef DEBUG_MODE
         vector<string> allowedValues = {"y", "n"};
         string continueRunning = SimUtilities::windowPromptStr(commandWindow, "Continue running simulation?(y/n): ",
                                                                allowedValues, true);
@@ -281,6 +284,9 @@ int main(int argc, char **argv) {
         } else {
             shouldStop = true;
         }
+#else
+        shouldStop = true;
+#endif
     }
 
     //endregion

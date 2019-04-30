@@ -30,7 +30,9 @@ namespace SimUtilities {
 
     string windowPromptStr(WINDOW *window, const char *promptString, vector<string> &allowedValues, int bufferSize);
 
-    std::vector<Point> random_select(const std::vector<Point> &locations, size_t count);
+    std::vector<Point> randomSelect(const std::vector<Point> &locations, size_t count);
+
+    double getValUniformRandDist();
 }
 
 #endif //ECOSIM_SIM_UTILITIES_HPP

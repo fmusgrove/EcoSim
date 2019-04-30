@@ -29,9 +29,17 @@ public:
 
     virtual int getRegrowthCoeff() const { return this->regrowthCoeff; }
 
-    virtual int getEnergy() const { return this->energy; }
+    virtual int getCurrentEnergy() const { return this->currentEnergy; }
+
+    virtual void setCurrentEnergy(const int energyToSet) { this->currentEnergy = energyToSet; }
+
+    virtual int getMaxEnergy() const { return this->maxEnergy; }
+
+    virtual bool getIsGrown() const { return false; }
 
     virtual std::vector<char> getFoodChain() const { return this->foodChain; }
+
+    virtual void makeEaten() {}
 
 private:
     const static NCURSES_COLOR_T colorPair = 0;
@@ -39,7 +47,8 @@ private:
     Point cachedLocation;
     const char charID = '?';
     int regrowthCoeff = -1;
-    int energy = -1;
+    int maxEnergy = -1;
+    int currentEnergy = -1;
     std::vector<char> foodChain;
 };
 
