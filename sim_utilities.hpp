@@ -24,7 +24,7 @@ namespace SimUtilities {
 
     void destroyWindow(WINDOW *local_win);
 
-    void printStringToWindow(WINDOW *window, const char *printString, bool has_border);
+    void windowPrintString(WINDOW *window, const char *printString, bool has_border);
 
     int windowPromptInt(WINDOW *window, const char *promptString, int bufferSize);
 

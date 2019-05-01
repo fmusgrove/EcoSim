@@ -67,7 +67,7 @@ namespace SimUtilities {
         delwin(local_win);
     }
 
-    void printStringToWindow(WINDOW *window, const char *printString, bool has_border) {
+    void windowPrintString(WINDOW *window, const char *printString, bool has_border) {
         int x, y;
         getyx(window, y, x);
 
@@ -98,14 +98,14 @@ namespace SimUtilities {
         bool shouldRetry;
         char input_str[bufferSize];
         do {
-            printStringToWindow(window, promptString, true);
+            windowPrintString(window, promptString, true);
             wgetstr(window, input_str);
             try {
                 userInputNum = stoi(input_str);
                 shouldRetry = false;
             } catch (invalid_argument &invArg) {
                 shouldRetry = true;
-                printStringToWindow(window, "Please enter a valid numeric value\n", true);
+                windowPrintString(window, "Please enter a valid numeric value\n", true);
             }
         } while (shouldRetry);
 
@@ -115,16 +115,24 @@ namespace SimUtilities {
     string windowPromptStr(WINDOW *window, const char *promptString, vector<string> &allowedValues, int bufferSize) {
         string userInputStr;
         bool shouldRetry;
+        bool isWildCardPresent = find(allowedValues.begin(), allowedValues.end(), "*") != allowedValues.end();
         char input_str[bufferSize];
         do {
-            printStringToWindow(window, promptString, true);
+            windowPrintString(window, promptString, true);
             wgetstr(window, input_str);
             userInputStr = input_str;
-            transform(userInputStr.begin(), userInputStr.end(), userInputStr.begin(), ::tolower);
-            if (userInputStr.empty() ||
-                find(allowedValues.begin(), allowedValues.end(), userInputStr) == allowedValues.end()) {
+            if (!isWildCardPresent) {
+                // Convert to lowercase if the wildcard value is not present to enable case
+                // insensitivity on the allowed values
+                transform(userInputStr.begin(), userInputStr.end(), userInputStr.begin(), ::tolower);
+            }
+            if ((userInputStr.empty() ||
+                 find(allowedValues.begin(), allowedValues.end(), userInputStr) == allowedValues.end()) &&
+                !isWildCardPresent) {
+                // If the string is empty, does not contain an allowed value, or the wildcard option is
+                // not present, the input is invalid
                 shouldRetry = true;
-                printStringToWindow(window, "Please enter a valid option\n", true);
+                windowPrintString(window, "Please enter a valid option\n", true);
             } else {
                 shouldRetry = false;
             }

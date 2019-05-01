@@ -143,8 +143,6 @@ int main(int argc, char **argv) {
         }
 
         MapManager::mapRows = yPos;
-        // Exclude newline character
-        mapColumns--;
         MapManager::mapColumns = mapColumns;
 
         cout << "Map with " << MapManager::mapRows << " rows and " << MapManager::mapColumns << " columns loaded"
@@ -239,7 +237,7 @@ int main(int argc, char **argv) {
 #ifndef DEBUG_MODE
         // Prompt user for number of simulation loops to run
         tickCount = SimUtilities::windowPromptInt(commandWindow, "Enter the number of simulation loops to run: ", 10);
-        SimUtilities::printStringToWindow(commandWindow, "Running Simulation", true);
+        SimUtilities::windowPrintString(commandWindow, "Running Simulation", true);
 #else
         tickCount = 20;
 #endif
@@ -254,17 +252,23 @@ int main(int argc, char **argv) {
 
             for (auto &element: MapManager::floraFauna) {
                 if (element.second->getSpeciesType() == SpeciesType::HERBIVORE) {
-                    element.second->tick();
                     // Check if energy levels are depleted
                     if (element.second->getCurrentEnergy() <= 0) {
                         MapManager::killElement(*element.second);
+                    } else {
+                        element.second->tick();
                     }
                 }
             }
 
             for (auto &element: MapManager::floraFauna) {
                 if (element.second->getSpeciesType() == SpeciesType::OMNIVORE) {
-                    element.second->tick();
+                    // Check if energy levels are depleted
+                    if (element.second->getCurrentEnergy() <= 0) {
+                        MapManager::killElement(*element.second);
+                    } else {
+                        element.second->tick();
+                    }
                 }
             }
 
@@ -277,11 +281,28 @@ int main(int argc, char **argv) {
 
 #ifndef DEBUG_MODE
         vector<string> allowedValues = {"y", "n"};
-        string continueRunning = SimUtilities::windowPromptStr(commandWindow, "Continue running simulation?(y/n): ",
+        string continueRunning = SimUtilities::windowPromptStr(commandWindow,
+                                                               "Continue running simulation?(y/n): ",
                                                                allowedValues, true);
         if (continueRunning == "y") {
             shouldStop = false;
         } else {
+            string shouldSaveState = SimUtilities::windowPromptStr(commandWindow,
+                                                                   "Save ecosystem state to file?(y/n): ",
+                                                                   allowedValues, true);
+            if (shouldSaveState == "y") {
+                allowedValues = {"*"};
+                string saveFileName = SimUtilities::windowPromptStr(commandWindow,
+                                                                    "Enter a filename to save the map: ",
+                                                                    allowedValues, true);
+                if (!MapManager::saveMapToFile(saveFileName)) {
+                    SimUtilities::windowPrintString(commandWindow, "An error occurred while saving the map. Exiting...",
+                                                    true);
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                } else {
+                    cout << "Map saved to " << saveFileName << endl;
+                }
+            }
             shouldStop = true;
         }
 #else

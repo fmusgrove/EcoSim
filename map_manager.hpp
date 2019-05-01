@@ -55,6 +55,13 @@ public:
     */
     static void killElement(EcosystemElement &element);
 
+    /**
+     * Save the map out to the specified filepath
+     * @param filePath filepath
+     * @return boolean value representing if the operation was successful or not
+     */
+    static bool saveMapToFile(const string &filePath);
+
     static FloraFaunaList floraFauna;
     static WaterObstacleList terrain;
     static int mapRows;

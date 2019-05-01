@@ -1,5 +1,7 @@
 #include "map_manager.hpp"
+
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 
 
@@ -167,4 +169,45 @@ void MapManager::killElement(EcosystemElement &element) {
             break;
         }
     }
+}
+
+bool MapManager::saveMapToFile(const string &filePath) {
+    vector<string> mapLines;
+    Point currentLocation;
+    ofstream mapFileStream(filePath);
+    bool isFirstLineWritten = false;
+
+    if (!mapFileStream.is_open()) {
+        return false;
+    }
+
+    for (int currentRow = 0; currentRow < mapRows; currentRow++) {
+        string lineToAdd;
+        for (int currentCol = 0; currentCol < mapColumns; currentCol++) {
+            currentLocation = {currentCol, currentRow};
+            auto floraFaunaIter = MapManager::floraFauna.find(currentLocation);
+            auto terrainIter = MapManager::terrain.find(currentLocation);
+            if (floraFaunaIter != MapManager::floraFauna.end()) {
+                // Animal element
+                lineToAdd += floraFaunaIter->second->getCharID();
+            } else if (terrainIter != MapManager::terrain.end()) {
+                // Terrain element
+                lineToAdd += terrainIter->second;
+            } else {
+                // Empty space
+                lineToAdd += " ";
+            }
+        }
+        // Write the line to the file
+        if (isFirstLineWritten) {
+            mapFileStream << endl;
+            mapFileStream << lineToAdd;
+        } else {
+            mapFileStream << lineToAdd;
+            isFirstLineWritten = true;
+        }
+    }
+
+    mapFileStream.close();
+    return true;
 }
