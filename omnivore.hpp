@@ -19,6 +19,8 @@ public:
 
     void tick() override;
 
+    void makeEaten() override;
+
     NCURSES_COLOR_T getColorPair() const override { return Omnivore::colorPair; }
 
     SpeciesType getSpeciesType() const override { return Omnivore::speciesType; }

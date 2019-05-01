@@ -16,10 +16,10 @@ void Herbivore::tick() {
         // Prioritize eating if energy levels are getting low
         actionableLocation = SimUtilities::randomSelect(foodNearby, 1)[0];
         MapManager::eatElement(*this, actionableLocation);
-    } else if (!matesNearby.empty() && currentEnergy > (0.5 * maxEnergy) && !availableLocations.empty() &&
-               SimUtilities::getValUniformRandDist() > 0.85) {
-        // Produce offspring if energy levels are at a high enough level and the probability threshold
-        // is reached (to avoid overpopulation)
+    } else if (!matesNearby.empty() && matesNearby.size() < 3 && currentEnergy > (0.5 * maxEnergy) &&
+               !availableLocations.empty() && SimUtilities::getValUniformRandDist() > 0.85) {
+        // Produce offspring if energy levels are at a high enough level, the probability threshold
+        // is reached, and the number of mates available is less than 3 (to avoid overpopulation)
         actionableLocation = SimUtilities::randomSelect(availableLocations, 1)[0];
         MapManager::floraFauna.insert(
                 pair(actionableLocation, make_unique<Herbivore>(charID, actionableLocation, foodChain, maxEnergy)));
@@ -28,4 +28,8 @@ void Herbivore::tick() {
         actionableLocation = SimUtilities::randomSelect(availableLocations, 1)[0];
         MapManager::moveElement(*this, actionableLocation);
     }
+}
+
+void Herbivore::makeEaten() {
+    currentEnergy = 0;
 }
