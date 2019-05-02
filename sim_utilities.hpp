@@ -4,6 +4,8 @@
 #include <string>
 #include <random>
 #include <iterator>
+#include <map>
+#include <unordered_map>
 #include "ncurses.h"
 #include "ecosystem_element.hpp"
 #include "map_manager.hpp"
@@ -23,6 +25,10 @@ namespace SimUtilities {
     WINDOW *createWindow(int height, int width, int startY, int startX, bool addBorders);
 
     void destroyWindow(WINDOW *local_win);
+
+    unordered_map<char, SimUtilities::SpeciesTraits> loadSpeciesList(const string &speciesFilePath);
+
+    void loadMap(const string &mapFilePath, const unordered_map<char, SimUtilities::SpeciesTraits> &speciesList);
 
     void windowPrintString(WINDOW *window, const char *printString, bool has_border);
 
