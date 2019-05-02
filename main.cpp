@@ -4,9 +4,7 @@
 //
 
 #include <iostream>
-#include <fstream>
 #include <string>
-#include <sstream>
 #include <algorithm>
 #include <chrono>
 #include <thread>
@@ -24,12 +22,24 @@
 
 // Macro to disable ncurses for debugging purposes
 //#define DEBUG_MODE
+//#define RUN_TESTS
 
 using namespace std;
 
+#ifdef RUN_TESTS
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
+
+TEST_CASE() {
+    cout << "TESTS HERE" << endl;
+}
+
+#else
+
 int main(int argc, char **argv) {
     string script_filepath(argv[0]);
-    string mapFilePath, speciesFilePath, fileLine;
+    string mapFilePath, speciesFilePath;
+    unordered_map<char, SimUtilities::SpeciesTraits> speciesList;
 
     // Get arguments and set default map and species files if none are specified
     if (argc >= 3) {
@@ -43,117 +53,11 @@ int main(int argc, char **argv) {
         speciesFilePath = "default_input/species.txt";
     }
 
-    //region Map and file loading
     // Load species list
-    ifstream speciesFile(speciesFilePath);
-    istringstream stringTraitStream;
-    string traitString;
-    unordered_map<char, SimUtilities::SpeciesTraits> speciesList;
-    if (speciesFile.is_open()) {
-        while (getline(speciesFile, fileLine)) {
-            stringTraitStream.clear();
-            stringTraitStream.str(fileLine);
-            string speciesType;
-            char speciesID;
-            vector<char> foodChain;
-            int regrowthCoeff = -1;
-            int energy = -1;
-
-            // Read the species type
-            stringTraitStream >> traitString;
-            speciesType = traitString;
-            transform(speciesType.begin(), speciesType.end(), speciesType.begin(), ::tolower);
-            // Read the character ID
-            stringTraitStream >> traitString;
-            speciesID = traitString[0];
-
-            // Read the rest of the traits
-            do {
-                stringTraitStream >> traitString;
-
-                // Assemble food chain
-                if (traitString.find('[') != string::npos || traitString.find(']') != string::npos ||
-                    traitString.find(',') != string::npos) {
-                    traitString.erase(std::remove(traitString.begin(), traitString.end(), '['), traitString.end());
-                    traitString.erase(std::remove(traitString.begin(), traitString.end(), ']'), traitString.end());
-                    traitString.erase(std::remove(traitString.begin(), traitString.end(), ','), traitString.end());
-                    foodChain.push_back(traitString[0]);
-                    continue;
-                }
-
-                // Set regrowth coefficient for plants and maximum energy levels for both plants and animals
-                if (speciesType == "plant") {
-                    if (regrowthCoeff == -1) {
-                        regrowthCoeff = stoi(traitString);
-                    } else if (energy == -1) {
-                        energy = stoi(traitString);
-                    }
-                } else {
-                    energy = stoi(traitString);
-                }
-
-            } while (stringTraitStream);
-
-            // Add species definition to the reference map
-            speciesList.insert(pair<char, SimUtilities::SpeciesTraits>(speciesID, {speciesType, regrowthCoeff, energy,
-                                                                                   foodChain}));
-        }
-        speciesFile.close();
-    } else {
-        cerr << "Unable to open file '" << speciesFilePath << "'" << endl;
-        return -1;
-    }
+    speciesList = SimUtilities::loadSpeciesList(speciesFilePath);
 
     // Load map into memory
-    int xPos = 0;
-    int yPos = 0;
-    int mapColumns = 0;
-    ifstream mapFile(mapFilePath);
-    if (mapFile.is_open()) {
-        while (getline(mapFile, fileLine)) {
-            xPos = 0;
-            for (char mapChar : fileLine) {
-                Point location(xPos, yPos);
-                if (mapChar == '~' || mapChar == '#') {
-                    // Terrain element
-                    MapManager::terrain.insert(pair(location, mapChar));
-                } else if (mapChar != ' ') {
-                    // Flora or fauna element
-                    auto foundSpeciesType = speciesList.find(mapChar)->second;
-
-                    if (foundSpeciesType.speciesType == "plant") {
-                        MapManager::floraFauna.insert(
-                                pair(location, make_unique<Plant>(mapChar, location, foundSpeciesType.regrowthCoeff,
-                                                                  foundSpeciesType.energy)));
-                    } else if (foundSpeciesType.speciesType == "herbivore") {
-                        MapManager::floraFauna.insert(
-                                pair(location, make_unique<Herbivore>(mapChar, location, foundSpeciesType.foodChain,
-                                                                      foundSpeciesType.energy)));
-                    } else if (foundSpeciesType.speciesType == "omnivore") {
-                        MapManager::floraFauna.insert(
-                                pair(location, make_unique<Omnivore>(mapChar, location, foundSpeciesType.foodChain,
-                                                                     foundSpeciesType.energy)));
-                    }
-
-                }
-                xPos++;
-            }
-            mapColumns = max(mapColumns, xPos);
-            yPos++;
-        }
-
-        MapManager::mapRows = yPos;
-        MapManager::mapColumns = mapColumns;
-
-        cout << "Map with " << MapManager::mapRows << " rows and " << MapManager::mapColumns << " columns loaded"
-             << endl;
-
-        mapFile.close();
-    } else {
-        cerr << "Unable to open file '" << mapFilePath << "'" << endl;
-        return -1;
-    }
-    //endregion
+    SimUtilities::loadMap(mapFilePath, speciesList);
 
     //region Curses setup
 #ifndef DEBUG_MODE
@@ -324,3 +228,5 @@ int main(int argc, char **argv) {
     cout << "Simulation complete" << endl;
     return 0;
 }
+
+#endif
