@@ -105,7 +105,7 @@ vector<Point> MapManager::nearbyMates(const EcosystemElement &element) {
     for (Point &pointToCheck: cardinalPoints) {
         auto foundElementIter = MapManager::floraFauna.find(pointToCheck);
         if (foundElementIter != MapManager::floraFauna.end()) {
-            if (foundElementIter->second->getSpeciesType() == element.getSpeciesType() &&
+            if (foundElementIter->second->getCharID() == element.getCharID() &&
                 foundElementIter->second->getCurrentEnergy() > (0.5 * foundElementIter->second->getMaxEnergy())) {
                 matesNearby.push_back(pointToCheck);
             }
