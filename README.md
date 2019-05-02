@@ -7,7 +7,7 @@ systems come with it already installed). Use the **-lcurses** flag to properly l
 ---
 ### Run EcoSim
 
-`clang++ -std=c++17 -lcurses main.cpp map_manager.cpp sim_utilities.cpp ecosystem_element.cpp plant.cpp herbivore.cpp omnivore.cpp -o main && ./main $MAP_FILEPATH $SPECIES_FILEPATH`
+`clang++ -std=c++17 -lcurses main.cpp map_manager.cpp sim_utilities.cpp ecosystem_element.cpp plant.cpp herbivore.cpp omnivore.cpp -o EcoSim && ./EcoSim $MAP_FILEPATH $SPECIES_FILEPATH`
 
 If no map and species filepath are specified, the simulation defaults will be used
 
