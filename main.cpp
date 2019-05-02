@@ -26,7 +26,6 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-    string script_filepath(argv[0]);
     string mapFilePath, speciesFilePath;
     unordered_map<char, SimUtilities::SpeciesTraits> speciesList;
 
@@ -34,9 +33,6 @@ int main(int argc, char **argv) {
     if (argc >= 3) {
         mapFilePath = argv[1];
         speciesFilePath = argv[2];
-    } else if (script_filepath.find("cmake") != string::npos) {
-        mapFilePath = "../default_input/map.txt";
-        speciesFilePath = "../default_input/species.txt";
     } else {
         mapFilePath = "default_input/map.txt";
         speciesFilePath = "default_input/species.txt";

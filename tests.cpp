@@ -1,6 +1,5 @@
 #define CATCH_CONFIG_MAIN
 
-#include "tests.hpp"
 #include "catch.hpp"
 #include <map>
 #include <unordered_map>
@@ -13,14 +12,14 @@
 #include "herbivore.hpp"
 #include "omnivore.hpp"
 
-TEST_CASE("EcoSim Testing Suite") {
+TEST_CASE("EcoSim Test Suite") {
     SECTION("Map and species file loading") {
         unordered_map<char, SimUtilities::SpeciesTraits> speciesList;
         // Load species list
-        speciesList = SimUtilities::loadSpeciesList("../test_input/species.txt");
+        speciesList = SimUtilities::loadSpeciesList("test_input/species.txt");
 
         // Load map into memory
-        SimUtilities::loadMap("../test_input/map.txt", speciesList);
+        SimUtilities::loadMap("test_input/map.txt", speciesList);
 
         REQUIRE(MapManager::mapRows == 10);
         REQUIRE(MapManager::mapColumns == 45);
@@ -54,7 +53,7 @@ TEST_CASE("EcoSim Testing Suite") {
     SECTION("Edible flora fauna around animals") {
         auto floraFaunaIter = MapManager::floraFauna.find(Point(40, 1));
         auto foodNearby = MapManager::edibleFloraFaunaNearby(*floraFaunaIter->second);
-        REQUIRE(foodNearby.size() == 0);
+        REQUIRE(foodNearby.empty());
 
         floraFaunaIter = MapManager::floraFauna.find(Point(44, 5));
         foodNearby = MapManager::edibleFloraFaunaNearby(*floraFaunaIter->second);
@@ -62,13 +61,20 @@ TEST_CASE("EcoSim Testing Suite") {
     }
 
     SECTION("Free locations around animals") {
+        // Test location on top of map
         auto floraFaunaIter = MapManager::floraFauna.find(Point(13, 0));
         auto availableLocations = MapManager::freeLocations(*floraFaunaIter->second);
         REQUIRE(availableLocations.size() == 3);
 
+        // Test location surrounded on all sides
         floraFaunaIter = MapManager::floraFauna.find(Point(5, 1));
         availableLocations = MapManager::freeLocations(*floraFaunaIter->second);
-        REQUIRE(availableLocations.size() == 0);
+        REQUIRE(availableLocations.empty());
+
+        // Test location on side of map with other element near
+        floraFaunaIter = MapManager::floraFauna.find(Point(44, 5));
+        availableLocations = MapManager::freeLocations(*floraFaunaIter->second);
+        REQUIRE(availableLocations.size() == 2);
     }
 
     SECTION("Available mates around animals") {
@@ -78,7 +84,19 @@ TEST_CASE("EcoSim Testing Suite") {
 
         floraFaunaIter = MapManager::floraFauna.find(Point(5, 1));
         matesNearby = MapManager::nearbyMates(*floraFaunaIter->second);
-        REQUIRE(matesNearby.size() == 0);
+        REQUIRE(matesNearby.empty());
+    }
+
+    SECTION("General movement") {
+        auto floraFaunaIter = MapManager::floraFauna.find(Point(21, 8));
+        MapManager::moveElement(*floraFaunaIter->second, Point(21, 7));
+
+        floraFaunaIter = MapManager::floraFauna.find(Point(21, 7));
+
+        REQUIRE(floraFaunaIter != MapManager::floraFauna.end());
+
+        // Check that the cached location was updated properly
+        REQUIRE(floraFaunaIter->second->getCachedLocation() == Point(21, 7));
     }
 
     SECTION("Movement over plants") {
@@ -109,6 +127,8 @@ TEST_CASE("EcoSim Testing Suite") {
         for (auto elementIter = foundElements.first; elementIter != foundElements.second; ++elementIter) {
             if (elementIter->second->getCharID() == 'C') {
                 REQUIRE(elementIter->second->getCurrentEnergy() == 0);
+            } else if (elementIter->second->getCharID() == 'D') {
+                REQUIRE(elementIter->second->getCurrentEnergy() == elementIter->second->getMaxEnergy());
             }
         }
     }

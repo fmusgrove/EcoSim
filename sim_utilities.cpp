@@ -7,7 +7,6 @@
 #include "herbivore.hpp"
 #include "omnivore.hpp"
 #include "ncurses.h"
-#include "tests.hpp"
 
 namespace SimUtilities {
 #ifndef CURSES_DISABLED
