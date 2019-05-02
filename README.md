@@ -14,4 +14,6 @@ If no map and species filepath are specified, the simulation defaults will be us
 ---
 ### Run Catch test cases
 
+The **-DCURSES_DISABLED** flag needs to be added when running tests to set the CURSES_DISABLED macro which will stop ncurses from initializing and masking the output from Catch
+
 `clang++ -std=c++17 -DCURSES_DISABLED tests.cpp map_manager.cpp sim_utilities.cpp ecosystem_element.cpp plant.cpp herbivore.cpp omnivore.cpp -o EcoSimTests && ./EcoSimTests`
