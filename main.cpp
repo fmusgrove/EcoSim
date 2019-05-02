@@ -21,20 +21,9 @@
 #include "omnivore.hpp"
 
 // Macro to disable ncurses for debugging purposes
-//#define DEBUG_MODE
-//#define RUN_TESTS
+//#define CURSES_DISABLED
 
 using namespace std;
-
-#ifdef RUN_TESTS
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
-
-TEST_CASE() {
-    cout << "TESTS HERE" << endl;
-}
-
-#else
 
 int main(int argc, char **argv) {
     string script_filepath(argv[0]);
@@ -60,7 +49,7 @@ int main(int argc, char **argv) {
     SimUtilities::loadMap(mapFilePath, speciesList);
 
     //region Curses setup
-#ifndef DEBUG_MODE
+#ifndef CURSES_DISABLED
     const int BANNER_HEIGHT = 20;
     // Initialize curses and setup main screen
     initscr();
@@ -138,7 +127,7 @@ int main(int argc, char **argv) {
     bool shouldStop = false;
     int tickCount;
     while (!shouldStop) {
-#ifndef DEBUG_MODE
+#ifndef CURSES_DISABLED
         // Prompt user for number of simulation loops to run
         tickCount = SimUtilities::windowPromptInt(commandWindow, "Enter the number of simulation loops to run: ", 10);
         SimUtilities::windowPrintString(commandWindow, "Running Simulation", true);
@@ -176,14 +165,14 @@ int main(int argc, char **argv) {
                 }
             }
 
-#ifndef DEBUG_MODE
+#ifndef CURSES_DISABLED
             SimUtilities::drawMap(simulationWindow, MAP_OFFSET_Y, MAP_OFFSET_X, true);
 #endif
             // Sleep to allow the user to see the result of each simulation cycle
             this_thread::sleep_for(chrono::milliseconds(500));
         }
 
-#ifndef DEBUG_MODE
+#ifndef CURSES_DISABLED
         vector<string> allowedValues = {"y", "n"};
         string continueRunning = SimUtilities::windowPromptStr(commandWindow,
                                                                "Continue running simulation?(y/n): ",
@@ -213,11 +202,9 @@ int main(int argc, char **argv) {
         shouldStop = true;
 #endif
     }
-
     //endregion
 
-    // Wait for user input
-#ifndef DEBUG_MODE
+#ifndef CURSES_DISABLED
     SimUtilities::destroyWindow(topBanner);
     SimUtilities::destroyWindow(simulationWindow);
     SimUtilities::destroyWindow(commandWindow);
@@ -228,5 +215,3 @@ int main(int argc, char **argv) {
     cout << "Simulation complete" << endl;
     return 0;
 }
-
-#endif

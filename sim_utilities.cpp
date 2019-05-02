@@ -6,8 +6,12 @@
 #include "plant.hpp"
 #include "herbivore.hpp"
 #include "omnivore.hpp"
+#include "ncurses.h"
+#include "tests.hpp"
 
 namespace SimUtilities {
+#ifndef CURSES_DISABLED
+
     void drawMap(WINDOW *window, const int mapOffsetY, const int mapOffsetX, bool has_border) {
         // Clear the window
         wclear(window);
@@ -73,6 +77,82 @@ namespace SimUtilities {
         // Remove the window
         delwin(local_win);
     }
+
+    void windowPrintString(WINDOW *window, const char *printString, bool has_border) {
+        int x, y;
+        getyx(window, y, x);
+
+        if (y == 0) {
+            ++y;
+        }
+
+        int maxY = getmaxy(window);
+
+        if (y >= maxY - 1) {
+            wclear(window);
+            wmove(window, 1, 1);
+            getyx(window, y, x);
+
+            if (has_border) {
+                wattron(window, COLOR_PAIR(1));
+                box(window, 0, 0);
+                wattroff(window, COLOR_PAIR(1));
+            }
+        }
+
+        mvwprintw(window, y, 1, "%s", printString);
+        wrefresh(window);
+    }
+
+    int windowPromptInt(WINDOW *window, const char *promptString, int bufferSize) {
+        int userInputNum = 0;
+        bool shouldRetry;
+        char input_str[bufferSize];
+        do {
+            windowPrintString(window, promptString, true);
+            wgetstr(window, input_str);
+            try {
+                userInputNum = stoi(input_str);
+                shouldRetry = false;
+            } catch (invalid_argument &invArg) {
+                shouldRetry = true;
+                windowPrintString(window, "Please enter a valid numeric value\n", true);
+            }
+        } while (shouldRetry);
+
+        return userInputNum;
+    }
+
+    string windowPromptStr(WINDOW *window, const char *promptString, vector<string> &allowedValues, int bufferSize) {
+        string userInputStr;
+        bool shouldRetry;
+        bool isWildCardPresent = find(allowedValues.begin(), allowedValues.end(), "*") != allowedValues.end();
+        char input_str[bufferSize];
+        do {
+            windowPrintString(window, promptString, true);
+            wgetstr(window, input_str);
+            userInputStr = input_str;
+            if (!isWildCardPresent) {
+                // Convert to lowercase if the wildcard value is not present to enable case
+                // insensitivity on the allowed values
+                transform(userInputStr.begin(), userInputStr.end(), userInputStr.begin(), ::tolower);
+            }
+            if ((userInputStr.empty() ||
+                 find(allowedValues.begin(), allowedValues.end(), userInputStr) == allowedValues.end()) &&
+                !isWildCardPresent) {
+                // If the string is empty, does not contain an allowed value, or the wildcard option is
+                // not present, the input is invalid
+                shouldRetry = true;
+                windowPrintString(window, "Please enter a valid option\n", true);
+            } else {
+                shouldRetry = false;
+            }
+        } while (shouldRetry);
+
+        return userInputStr;
+    }
+
+#endif
 
     unordered_map<char, SimUtilities::SpeciesTraits> loadSpeciesList(const string &speciesFilePath) {
         ifstream speciesFile(speciesFilePath);
@@ -190,80 +270,6 @@ namespace SimUtilities {
             cerr << "Unable to open file '" << mapFilePath << "'" << endl;
             exit(-1);
         }
-    }
-
-    void windowPrintString(WINDOW *window, const char *printString, bool has_border) {
-        int x, y;
-        getyx(window, y, x);
-
-        if (y == 0) {
-            ++y;
-        }
-
-        int maxY = getmaxy(window);
-
-        if (y >= maxY - 1) {
-            wclear(window);
-            wmove(window, 1, 1);
-            getyx(window, y, x);
-
-            if (has_border) {
-                wattron(window, COLOR_PAIR(1));
-                box(window, 0, 0);
-                wattroff(window, COLOR_PAIR(1));
-            }
-        }
-
-        mvwprintw(window, y, 1, "%s", printString);
-        wrefresh(window);
-    }
-
-    int windowPromptInt(WINDOW *window, const char *promptString, int bufferSize) {
-        int userInputNum = 0;
-        bool shouldRetry;
-        char input_str[bufferSize];
-        do {
-            windowPrintString(window, promptString, true);
-            wgetstr(window, input_str);
-            try {
-                userInputNum = stoi(input_str);
-                shouldRetry = false;
-            } catch (invalid_argument &invArg) {
-                shouldRetry = true;
-                windowPrintString(window, "Please enter a valid numeric value\n", true);
-            }
-        } while (shouldRetry);
-
-        return userInputNum;
-    }
-
-    string windowPromptStr(WINDOW *window, const char *promptString, vector<string> &allowedValues, int bufferSize) {
-        string userInputStr;
-        bool shouldRetry;
-        bool isWildCardPresent = find(allowedValues.begin(), allowedValues.end(), "*") != allowedValues.end();
-        char input_str[bufferSize];
-        do {
-            windowPrintString(window, promptString, true);
-            wgetstr(window, input_str);
-            userInputStr = input_str;
-            if (!isWildCardPresent) {
-                // Convert to lowercase if the wildcard value is not present to enable case
-                // insensitivity on the allowed values
-                transform(userInputStr.begin(), userInputStr.end(), userInputStr.begin(), ::tolower);
-            }
-            if ((userInputStr.empty() ||
-                 find(allowedValues.begin(), allowedValues.end(), userInputStr) == allowedValues.end()) &&
-                !isWildCardPresent) {
-                // If the string is empty, does not contain an allowed value, or the wildcard option is
-                // not present, the input is invalid
-                shouldRetry = true;
-                windowPrintString(window, "Please enter a valid option\n", true);
-            } else {
-                shouldRetry = false;
-            }
-        } while (shouldRetry);
-
-        return userInputStr;
     }
 
     std::vector<Point> randomSelect(const std::vector<Point> &locations, size_t count) {

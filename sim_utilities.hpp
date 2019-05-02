@@ -6,7 +6,6 @@
 #include <iterator>
 #include <map>
 #include <unordered_map>
-#include "ncurses.h"
 #include "ecosystem_element.hpp"
 #include "map_manager.hpp"
 
